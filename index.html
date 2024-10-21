@@ -44,8 +44,8 @@
       border-radius: 4px;
       cursor: pointer;
       transition: background-color 0.3s;
-      margin-top: 100px; /* Increased margin to move button down */
-      margin-bottom: 30px; /* Maintain margin below */
+      margin-top: 10px;
+      margin-bottom: 30px;
     }
     button:hover {
       background-color: #0056b3;
@@ -53,7 +53,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px; /* Kept the same margin as before */
+      margin-top: 20px;
     }
     th, td {
       padding: 12px;
@@ -74,7 +74,6 @@
       text-align: center;
     }
     .suggestions {
-     
       width: calc(50% - 22px);
       max-height: 150px;
       overflow-y: auto;
@@ -90,6 +89,9 @@
     .suggestions div:hover {
       background-color: #f0f0f0;
     }
+    .search-options {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +99,13 @@
 <div class="container">
   <h1>Bangla-BN Latin Dictionary</h1>
   <div>
-    <input type="text" id="search" placeholder="Enter Bangla word..." oninput="showSuggestions()" />
+    <select id="searchType" class="search-options">
+      <option value="bangla">Bangla</option>
+      <option value="bn_latin_1">BN Latin 1</option>
+      <option value="bn_latin_2">BN Latin 2</option>
+      <option value="english">English</option>
+    </select>
+    <input type="text" id="search" placeholder="Enter word..." oninput="showSuggestions()" />
     <div id="suggestions" class="suggestions"></div>
     <button onclick="searchWord()">Search</button>
   </div>
@@ -106,8 +114,8 @@
     <thead>
       <tr>
         <th>Bangla</th>
-        <th>BN Latin</th>
-        <th>Alternative</th>
+        <th>BN Latin 1</th>
+        <th>BN Latin 2</th>
         <th>English Meaning</th>
       </tr>
     </thead>
@@ -128,12 +136,12 @@
     const rows = data.split("\n").slice(1); // Remove header row
 
     sheetData = rows.map(row => {
-      const [bangla, bn_latin, alternative, englishMeaning] = row.split(",");
+      const [bangla, bn_latin_1, bn_latin_2, englishMeaning] = row.split(",");
       return {
         bangla: bangla.trim(),
-        bn_latin: bn_latin.trim(),
-        alternative: alternative.trim() || 'N/A',
-        englishMeaning: englishMeaning.trim() || 'N/A'  // Add English meaning
+        bn_latin_1: bn_latin_1.trim(),
+        bn_latin_2: bn_latin_2.trim(),
+        englishMeaning: englishMeaning.trim() || 'N/A'
       };
     });
   }
@@ -151,17 +159,23 @@
       return;
     }
 
-    // Filter the data based on partial matches
+    // Filter the data based on the selected search type
+    const searchType = document.getElementById('searchType').value;
     const matchedData = sheetData.filter(row => {
-      return row.bangla.toLowerCase().includes(searchValue);
+      // For English, we match against the English meaning
+      if (searchType === 'english') {
+        return row.englishMeaning.toLowerCase().includes(searchValue);
+      } else {
+        return row[searchType].toLowerCase().includes(searchValue);
+      }
     });
 
     // Show suggestions if matches are found
     if (matchedData.length > 0) {
       matchedData.forEach(row => {
         const suggestionDiv = document.createElement('div');
-        suggestionDiv.textContent = row.bangla;
-        suggestionDiv.onclick = () => selectSuggestion(row.bangla);
+        suggestionDiv.textContent = searchType === 'english' ? row.englishMeaning : row[searchType]; // Display matched word based on search type
+        suggestionDiv.onclick = () => selectSuggestion(searchType === 'english' ? row.englishMeaning : row[searchType]);
         suggestionsBox.appendChild(suggestionDiv);
       });
     }
@@ -175,7 +189,8 @@
 
   // Search function
   function searchWord() {
-    const searchValue = document.getElementById('search').value.trim().toLowerCase(); // Trim spaces here
+    const searchValue = document.getElementById('search').value.trim().toLowerCase();
+    const searchType = document.getElementById('searchType').value;
     const tableBody = document.getElementById('table-body');
     const noResultDiv = document.getElementById('no-result');
 
@@ -184,13 +199,20 @@
     noResultDiv.innerHTML = '';
 
     // Filter the search result
-    const filteredData = sheetData.filter(row => row.bangla.toLowerCase() === searchValue);
+    const filteredData = sheetData.filter(row => {
+      // Match for Bangla, BN Latin, and English
+      if (searchType === 'english') {
+        return row.englishMeaning.toLowerCase() === searchValue;
+      } else {
+        return row[searchType].toLowerCase() === searchValue;
+      }
+    });
 
     if (filteredData.length > 0) {
-      // Display the searched word, BN Latin, alternative, and English meaning
+      // Display the searched word, BN Latin, and English meaning
       filteredData.forEach(row => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${row.bangla}</td><td>${row.bn_latin}</td><td>${row.alternative}</td><td>${row.englishMeaning}</td>`;
+        tr.innerHTML = `<td>${row.bangla}</td><td>${row.bn_latin_1}</td><td>${row.bn_latin_2}</td><td>${row.englishMeaning}</td>`;
         tableBody.appendChild(tr);
       });
     } else {
@@ -205,4 +227,3 @@
 
 </body>
 </html>
-
