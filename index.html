@@ -101,8 +101,7 @@
   <div>
     <select id="searchType" class="search-options">
       <option value="bangla">Bangla</option>
-      <option value="bn_latin_1">BN Latin 1</option>
-      <option value="bn_latin_2">BN Latin 2</option>
+      <option value="bn_latin">BN Latin</option> <!-- Updated option -->
       <option value="english">English</option>
     </select>
     <input type="text" id="search" placeholder="Enter word..." oninput="showSuggestions()" />
@@ -114,8 +113,8 @@
     <thead>
       <tr>
         <th>Bangla</th>
-        <th>BN Latin 1</th>
-        <th>BN Latin 2</th>
+        <th>BN Latin</th>
+        <th>BN Latin-ALT</th>
         <th>English Meaning</th>
       </tr>
     </thead>
@@ -165,6 +164,8 @@
       // For English, we match against the English meaning
       if (searchType === 'english') {
         return row.englishMeaning.toLowerCase().includes(searchValue);
+      } else if (searchType === 'bn_latin') {
+        return row.bn_latin_1.toLowerCase().includes(searchValue); // Show only BN Latin 1 words
       } else {
         return row[searchType].toLowerCase().includes(searchValue);
       }
@@ -174,8 +175,8 @@
     if (matchedData.length > 0) {
       matchedData.forEach(row => {
         const suggestionDiv = document.createElement('div');
-        suggestionDiv.textContent = searchType === 'english' ? row.englishMeaning : row[searchType]; // Display matched word based on search type
-        suggestionDiv.onclick = () => selectSuggestion(searchType === 'english' ? row.englishMeaning : row[searchType]);
+        suggestionDiv.textContent = searchType === 'english' ? row.englishMeaning : (searchType === 'bn_latin' ? row.bn_latin_1 : row[searchType]); // Adjusted to show BN Latin 1
+        suggestionDiv.onclick = () => selectSuggestion(searchType === 'english' ? row.englishMeaning : (searchType === 'bn_latin' ? row.bn_latin_1 : row[searchType]));
         suggestionsBox.appendChild(suggestionDiv);
       });
     }
@@ -200,9 +201,10 @@
 
     // Filter the search result
     const filteredData = sheetData.filter(row => {
-      // Match for Bangla, BN Latin, and English
       if (searchType === 'english') {
         return row.englishMeaning.toLowerCase() === searchValue;
+      } else if (searchType === 'bn_latin') {
+        return row.bn_latin_1.toLowerCase() === searchValue; // Search only in BN Latin 1
       } else {
         return row[searchType].toLowerCase() === searchValue;
       }
